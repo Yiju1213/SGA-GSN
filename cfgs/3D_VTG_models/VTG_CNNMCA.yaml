@@ -1,0 +1,78 @@
+optimizer : {
+  type: AdamW,
+  kwargs: {
+  lr : 0.00012, 
+  weight_decay : 0.0005
+}}
+
+scheduler: {
+  type: LambdaLR,
+  kwargs: {
+  decay_step: 10, 
+  lr_decay: 0.90, 
+  lowest_decay: 0.02  # min lr = lowest_decay * lr
+}}
+
+bnmscheduler: {
+  type: Lambda,
+  kwargs: {
+  decay_step: 10, # original 10
+  bn_decay: 0.5,
+  bn_momentum: 0.9,
+  lowest_decay: 0.01
+}}
+
+dataset : {
+  train : { _base_: cfgs/dataset_configs/VTG2D_TacCat.yaml, 
+            others: {subset: 'train'}},
+  val : { _base_: cfgs/dataset_configs/VTG2D_TacCat.yaml, 
+            others: {subset: 'test'}},
+  test : { _base_: cfgs/dataset_configs/VTG2D_TacCat.yaml, 
+            others: {subset: 'test'}}}
+            
+grasp_model : {
+    NAME: GraspStability_CNNMCA,
+    
+    # Visual feature extractor configuration
+    visual_extractor: {
+      embed_dim: 512,
+      pretrained: True,
+      freeze_backbone: False,
+    },
+    
+    # Tactile feature extractor configuration
+    tactile_extractor: {
+      embed_dim: 512,
+      pretrained: True,
+      freeze_backbone: False,
+    },
+    
+    # Cross-modal fusion transformer configuration
+    fusion_transformer: {
+      embed_dim: 512,
+      num_heads: 8,
+      num_layers: 4,
+      mlp_ratio: 4.0,
+      dropout: 0.1,
+      pos_encoding_temp: 10000,
+    },
+    
+    # Classification head configuration
+    classifier: {
+      num_classes: 1,  # For binary classification with BCEWithLogitsLoss
+      hidden_dim: 256,  # embed_dim // 2 
+      dropout: 0.1,
+    },
+    
+    # Ablation study configurations
+    ablation: {
+      # Add ablation study flags if needed
+    },
+}
+
+train_data_ratio: 0.75
+total_bs : 32
+step_per_update : 1
+max_epoch : 30
+
+consider_metric: AvgAcc

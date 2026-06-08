@@ -1,0 +1,138 @@
+optimizer : {
+  type: AdamW,
+  kwargs: {
+  lr : 0.000080,
+  weight_decay : 0.0005
+}}
+
+scheduler: {
+  type: LambdaLR,
+  kwargs: {
+  decay_step: 5,
+  lr_decay: 0.85,
+  lowest_decay: 0.02  # min lr = lowest_decay * lr
+}}
+
+bnmscheduler: {
+  type: Lambda,
+  kwargs: {
+  decay_step: 10,
+  bn_decay: 0.5,
+  bn_momentum: 0.9,
+  lowest_decay: 0.01
+}}
+
+dataset : {
+  train : { _base_: cfgs/dataset_configs/VTG3D.yaml,
+            others: {subset: 'train'}},
+  val : { _base_: cfgs/dataset_configs/VTG3D.yaml,
+            others: {subset: 'test'}},
+  test : { _base_: cfgs/dataset_configs/VTG3D.yaml,
+            others: {subset: 'test'}}}
+
+# NOTE: DGCNN backbones accept (B, N, C) or (B, C, N). Tactile and shape
+# inputs can be 4-dim (xyz + contact/local-density) by setting input_dim: 4.
+grasp_model : {
+    NAME: DGCNNGraspStability,
+    loss_manager: {},
+    HIDDEN_DIM: 256,
+    OUT_DIM: 1,
+    DROPOUT: 0.2,
+    VIS_GROUPER: {
+      input_dim: 3, # xyz only
+      proxy_num: [256, 128]
+    },
+    TAC_GROUPER: {
+      input_dim: 4, # xyz + contact binary
+      proxy_num: [256, 128]
+    },
+    VIS_BACKBONE: {
+      # input_dim: 3, follows grouper output
+      k: 20,
+      emb_dims: 4096, 
+      # conv_channels: [64, 64, 128, 256],
+      conv_channels: [256, 512, 1024, 2048], 
+    },
+    TAC_BACKBONE: {
+      # input_dim: 4, follows grouper output
+      k: 20,
+      emb_dims: 4096, 
+      # conv_channels: [64, 64, 128, 256],
+      conv_channels: [256, 512, 1024, 2048],
+    }
+}
+# grasp_model : {
+#     NAME: DGCNNGraspStability,
+#     loss_manager: {},
+#     HIDDEN_DIM: 256,
+#     OUT_DIM: 1,
+#     DROPOUT: 0.2,
+#     VIS_GROUPER: {
+#       input_dim: 3, # xyz only
+#       proxy_num: [256, 128]
+#     },
+#     TAC_GROUPER: {
+#       input_dim: 4, # xyz + contact binary
+#       proxy_num: [256, 128]
+#     },
+#     VIS_BACKBONE: {
+#       # input_dim: 3, follows grouper output
+#       k: 20,
+#       emb_dims: 3072, 
+#       # conv_channels: [64, 64, 128, 256],
+#       conv_channels: [384, 512, 768, 1024], 
+#     },
+#     TAC_BACKBONE: {
+#       # input_dim: 4, follows grouper output
+#       k: 20,
+#       emb_dims: 3072, 
+#       # conv_channels: [64, 64, 128, 256],
+#       conv_channels: [384, 512, 768, 1024],
+#     }
+# }
+
+shape_model : {
+    NAME: AdaPoinTr,
+    num_query: 512,
+    num_points: 8192,
+    center_num: [256, 128],
+    global_feature_dim: 1024,
+    encoder_type: graph,
+    decoder_type: fc,
+    encoder_config: {
+      embed_dim: 384,
+      depth: 6,
+      num_heads: 6,
+      k: 8,
+      n_group: 2,
+      mlp_ratio: 2.,
+      block_style_list: ['attn-graph', 'attn', 'attn', 'attn', 'attn', 'attn'],
+      combine_style: 'concat',
+    },
+    decoder_config: {
+      embed_dim: 384,
+      depth: 8,
+      num_heads: 6,
+      k: 8,
+      n_group: 2,
+      mlp_ratio: 2.,
+      self_attn_block_style_list: ['attn-graph', 'attn', 'attn', 'attn', 'attn', 'attn', 'attn', 'attn'],
+      self_attn_combine_style: 'concat',
+      cross_attn_block_style_list: ['attn-graph', 'attn', 'attn', 'attn', 'attn', 'attn', 'attn', 'attn'],
+      cross_attn_combine_style: 'concat',
+    }
+}
+
+ablation: {
+  direct_concat: False,
+  full_shape_input: False,
+  without_spatial_align: False,
+  without_shape_completion: False
+}
+
+train_data_ratio: 0.75
+total_bs : 32
+step_per_update : 1
+max_epoch : 30
+
+consider_metric: AvgAcc

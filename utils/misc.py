@@ -34,10 +34,17 @@ def fps(data, number):
         data B N 3
         number int
     '''
-    fps_idx = pointnet2_utils.furthest_point_sample(data, number) 
+    fps_idx = pointnet2_utils.furthest_point_sample(data, number)
     fps_data = pointnet2_utils.gather_operation(data.transpose(1, 2).contiguous(), fps_idx).transpose(1,2).contiguous()
     return fps_data
 
+def collate_fn(batch):
+    batch = [item for item in batch if item is not None]
+
+    if len(batch) == 0:
+        return None
+
+    return torch.utils.data.dataloader.default_collate(batch)
 
 def worker_init_fn(worker_id):
     np.random.seed(np.random.get_state()[1][0] + worker_id)
@@ -59,7 +66,7 @@ def build_lambda_bnsche(model, config, last_epoch=-1):
     else:
         raise NotImplementedError()
     return bnm_scheduler
-    
+
 def set_random_seed(seed, deterministic=False):
     """Set random seed.
     Args:
@@ -159,7 +166,7 @@ def seprate_point_cloud(xyz, num_points, crop, fixed_points = None, padding_zero
     assert c == 3
     if crop == num_points:
         return xyz, None
-        
+
     INPUT = []
     CROP = []
     for points in xyz:
@@ -170,7 +177,7 @@ def seprate_point_cloud(xyz, num_points, crop, fixed_points = None, padding_zero
 
         points = points.unsqueeze(0)
 
-        if fixed_points is None:       
+        if fixed_points is None:
             center = F.normalize(torch.randn(1,1,3),p=2,dim=-1).cuda()
         else:
             if isinstance(fixed_points,list):
@@ -228,7 +235,7 @@ def get_ptcloud_img(ptcloud):
 
 
 
-def visualize_KITTI(path, data_list, titles = ['input','pred'], cmap=['bwr','autumn'], zdir='y', 
+def visualize_KITTI(path, data_list, titles = ['input','pred'], cmap=['bwr','autumn'], zdir='y',
                          xlim=(-1, 1), ylim=(-1, 1), zlim=(-1, 1) ):
     fig = plt.figure(figsize=(6*len(data_list),6))
     cmax = data_list[-1][:,0].max()
@@ -265,7 +272,7 @@ def random_dropping(pc, e):
     padding = torch.zeros(pc.size(0), 2048 - pc.size(1), 3).to(pc.device)
     pc = torch.cat([pc, padding], dim = 1)
     return pc
-    
+
 
 def random_scale(partial, gt, scale_range=[0.8, 1.2]):
     scale = torch.rand(1).cuda() * (scale_range[1] - scale_range[0]) + scale_range[0]

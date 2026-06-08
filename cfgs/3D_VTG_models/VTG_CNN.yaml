@@ -1,0 +1,50 @@
+optimizer : {
+  type: AdamW,
+  kwargs: {
+  lr : 0.000100, 
+  weight_decay : 0.0005
+}}
+
+scheduler: {
+  type: LambdaLR,
+  kwargs: {
+  decay_step: 10, 
+  lr_decay: 0.90, 
+  lowest_decay: 0.02  # min lr = lowest_decay * lr
+}}
+
+bnmscheduler: {
+  type: Lambda,
+  kwargs: {
+  decay_step: 10, # original 10
+  bn_decay: 0.5,
+  bn_momentum: 0.9,
+  lowest_decay: 0.01
+}}
+
+dataset : {
+  train : { _base_: cfgs/dataset_configs/VTG2D.yaml, 
+            others: {subset: 'train'}},
+  val : { _base_: cfgs/dataset_configs/VTG2D.yaml, 
+            others: {subset: 'test'}},
+  test : { _base_: cfgs/dataset_configs/VTG2D.yaml, 
+            others: {subset: 'test'}}}
+            
+grasp_model : {
+    NAME: GraspStability_CNN,
+    
+    # Model configuration parameters
+    pretrained: True,
+    freeze_backbone: False,
+    hidden_dim: 1024,
+    dropout: 0.5,
+    num_classes: 1,  # For binary classification with BCEWithLogitsLoss
+    lack_cam_bef: True,  # Whether to lack cam_bef input
+}
+
+train_data_ratio: 0.75
+total_bs : 28
+step_per_update : 1
+max_epoch : 30
+
+consider_metric: AvgAcc

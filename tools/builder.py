@@ -4,6 +4,7 @@ import torch
 # optimizer
 import torch.optim as optim
 from timm.scheduler import CosineLRScheduler
+from torch.utils.data import DataLoader
 # dataloader
 from datasets import build_dataset_from_cfg
 from models import build_model_from_cfg
@@ -16,17 +17,19 @@ def dataset_builder(args, config):
     shuffle = config.others.subset == 'train'
     if args.distributed:
         sampler = torch.utils.data.distributed.DistributedSampler(dataset, shuffle = shuffle)
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size = config.others.bs if shuffle else 1,
+        dataloader = DataLoader(dataset, batch_size = config.others.bs if shuffle else 1,
                                             num_workers = int(args.num_workers),
                                             drop_last = config.others.subset == 'train',
                                             worker_init_fn = worker_init_fn,
+                                            collate_fn = collate_fn,
                                             sampler = sampler)
     else:
         sampler = None
-        dataloader = torch.utils.data.DataLoader(dataset, batch_size=config.others.bs if shuffle else 1,
+        dataloader = DataLoader(dataset, batch_size=config.others.bs if shuffle else 1,
                                                 shuffle = shuffle, 
                                                 drop_last = config.others.subset == 'train',
                                                 num_workers = int(args.num_workers),
+                                                collate_fn = collate_fn,
                                                 worker_init_fn=worker_init_fn)
     return sampler, dataloader
 
@@ -99,7 +102,7 @@ def resume_model(base_model, args, logger = None):
     state_dict = torch.load(ckpt_path, map_location=map_location)
     # parameter resume of base model
     # if args.local_rank == 0:
-    base_ckpt = {k.replace("module.", ""): v for k, v in state_dict['base_model'].items()}
+    base_ckpt = {k.replace("module.", ""): v for k, v in state_dict['base_model'].items()} # only model, no optimizer
     base_model.load_state_dict(base_ckpt)
 
     # parameter
@@ -118,10 +121,21 @@ def resume_optimizer(optimizer, args, logger = None):
         print_log(f'[RESUME INFO] no checkpoint file from path {ckpt_path}...', logger = logger)
         return 0, 0, 0
     print_log(f'[RESUME INFO] Loading optimizer from {ckpt_path}...', logger = logger )
-    # load state dict
-    state_dict = torch.load(ckpt_path, map_location='cpu')
-    # optimizer
-    optimizer.load_state_dict(state_dict['optimizer'])
+    try:
+        state_dict = torch.load(ckpt_path, map_location='cpu')
+
+        if 'optimizer' not in state_dict:
+            print_log(f"[RESUME WARNING] 'optimizer' not found in checkpoint!", logger=logger)
+            return 0, 0, 0
+
+        optimizer.load_state_dict(state_dict['optimizer'])
+        print_log(f"[RESUME INFO] Optimizer state resumed successfully.", logger=logger)
+
+    except Exception as e:
+        print_log(f"[RESUME ERROR] Failed to load optimizer state: {e}", logger=logger)
+        return 0, 0, 0
+
+    return state_dict.get('epoch', 0), state_dict.get('best_metric', 0), state_dict.get('global_step', 0)
 
 def save_checkpoint(base_model, optimizer, epoch, metrics, best_metrics, prefix, args, logger = None):
     if args.local_rank == 0:

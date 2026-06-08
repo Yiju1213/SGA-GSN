@@ -784,7 +784,7 @@ class DynamicGraphAttention(nn.Module):
         self.dim = dim
         # Deformable related
         self.k = k  # To be controlled 
-        self.knn_map = nn.Sequential(
+        self.knn_map = nn.Sequential( # complexity: B × N × k × (dim×2) × dim
             nn.Linear(dim * 2, dim),
             nn.LeakyReLU(negative_slope=0.2)
         )
@@ -811,7 +811,7 @@ class DynamicGraphAttention(nn.Module):
             # gather the neighbor point feat
             local_v = index_points(v, idx) # B N k C 
             q = q.unsqueeze(-2).expand(-1, -1, self.k, -1) # B N k C
-            feature = torch.cat((local_v - q, q), dim=-1) # B N k C
+            feature = torch.cat((local_v - q, q), dim=-1) # B N k 2C
             out = self.knn_map(feature).max(-2)[0] # B N C
 
             assert out.size(0) == B

@@ -14,14 +14,14 @@ from utils import misc
 
 class SelfAttnBlockApi(nn.Module):
     r'''
-        1. Norm Encoder Block 
+        1. Norm Encoder Block
             block_style = 'attn'
         2. Concatenation Fused Encoder Block
-            block_style = 'attn-deform'  
+            block_style = 'attn-deform'
             combine_style = 'concat'
         3. Three-layer Fused Encoder Block
-            block_style = 'attn-deform'  
-            combine_style = 'onebyone'        
+            block_style = 'attn-deform'
+            combine_style = 'onebyone'
     '''
     def __init__(
             self, dim, num_heads, mlp_ratio=4., qkv_bias=False, drop=0., attn_drop=0., init_values=None,
@@ -39,7 +39,7 @@ class SelfAttnBlockApi(nn.Module):
         self.norm2 = norm_layer(dim)
         self.ls2 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
         self.mlp = Mlp(in_features=dim, hidden_features=int(dim * mlp_ratio), act_layer=act_layer, drop=drop)
-        self.drop_path2 = DropPath(drop_path) if drop_path > 0. else nn.Identity()        
+        self.drop_path2 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
         # Api desigin
         block_tokens = block_style.split('-')
@@ -106,45 +106,45 @@ class SelfAttnBlockApi(nn.Module):
 
         x = x + self.drop_path2(self.ls2(self.mlp(self.norm2(x))))
         return x
-   
+
 class CrossAttnBlockApi(nn.Module):
     r'''
-        1. Norm Decoder Block 
+        1. Norm Decoder Block
             self_attn_block_style = 'attn'
             cross_attn_block_style = 'attn'
         2. Concatenation Fused Decoder Block
-            self_attn_block_style = 'attn-deform'  
+            self_attn_block_style = 'attn-deform'
             self_attn_combine_style = 'concat'
-            cross_attn_block_style = 'attn-deform'  
+            cross_attn_block_style = 'attn-deform'
             cross_attn_combine_style = 'concat'
         3. Three-layer Fused Decoder Block
-            self_attn_block_style = 'attn-deform'  
+            self_attn_block_style = 'attn-deform'
             self_attn_combine_style = 'onebyone'
-            cross_attn_block_style = 'attn-deform'  
-            cross_attn_combine_style = 'onebyone'    
+            cross_attn_block_style = 'attn-deform'
+            cross_attn_combine_style = 'onebyone'
         4. Design by yourself
             #  only deform the cross attn
-            self_attn_block_style = 'attn'  
-            cross_attn_block_style = 'attn-deform'  
-            cross_attn_combine_style = 'concat'    
+            self_attn_block_style = 'attn'
+            cross_attn_block_style = 'attn-deform'
+            cross_attn_combine_style = 'concat'
             #  perform graph conv on self attn
-            self_attn_block_style = 'attn-graph'  
-            self_attn_combine_style = 'concat'    
-            cross_attn_block_style = 'attn-deform'  
-            cross_attn_combine_style = 'concat'    
+            self_attn_block_style = 'attn-graph'
+            self_attn_combine_style = 'concat'
+            cross_attn_block_style = 'attn-deform'
+            cross_attn_combine_style = 'concat'
     '''
     def __init__(
             self, dim, num_heads, mlp_ratio=4., qkv_bias=False, drop=0., attn_drop=0., init_values=None,
-            drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm, 
+            drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm,
             self_attn_block_style='attn-deform', self_attn_combine_style='concat',
             cross_attn_block_style='attn-deform', cross_attn_combine_style='concat',
             k=10, n_group=2
         ):
-        super().__init__()        
+        super().__init__()
         self.norm2 = norm_layer(dim)
         self.ls2 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
         self.mlp = Mlp(in_features=dim, hidden_features=int(dim * mlp_ratio), act_layer=act_layer, drop=drop)
-        self.drop_path2 = DropPath(drop_path) if drop_path > 0. else nn.Identity()      
+        self.drop_path2 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
         # Api desigin
         # first we deal with self-attn
@@ -154,7 +154,7 @@ class CrossAttnBlockApi(nn.Module):
 
         self.self_attn_combine_style = self_attn_combine_style
         assert self_attn_combine_style in ['concat', 'onebyone'], f'got unexpect self_attn_combine_style {self_attn_combine_style} for local and global attn'
-  
+
         self_attn_block_tokens = self_attn_block_style.split('-')
         assert len(self_attn_block_tokens) > 0 and len(self_attn_block_tokens) <= 2, f'invalid self_attn_block_style {self_attn_block_style}'
         self.self_attn_block_length = len(self_attn_block_tokens)
@@ -184,11 +184,11 @@ class CrossAttnBlockApi(nn.Module):
         self.norm_q = norm_layer(dim)
         self.norm_v = norm_layer(dim)
         self.ls4 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
-        self.drop_path4 = DropPath(drop_path) if drop_path > 0. else nn.Identity()  
+        self.drop_path4 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
 
         self.cross_attn_combine_style = cross_attn_combine_style
         assert cross_attn_combine_style in ['concat', 'onebyone'], f'got unexpect cross_attn_combine_style {cross_attn_combine_style} for local and global attn'
-        
+
         # Api desigin
         cross_attn_block_tokens = cross_attn_block_style.split('-')
         assert len(cross_attn_block_tokens) > 0 and len(cross_attn_block_tokens) <= 2, f'invalid cross_attn_block_style {cross_attn_block_style}'
@@ -258,7 +258,7 @@ class CrossAttnBlockApi(nn.Module):
             if self.local_self_attn is not None:
                 local_attn_feat = self.local_self_attn(norm_q, q_pos, idx=self_attn_idx, denoise_length=denoise_length)
                 feature_list.append(local_attn_feat)
-            # combine
+            # combine(actually only one)
             if len(feature_list) == 1:
                 f = feature_list[0]
                 q = q + self.drop_path1(self.ls1(f))
@@ -307,7 +307,90 @@ class CrossAttnBlockApi(nn.Module):
 
         q = q + self.drop_path2(self.ls2(self.mlp(self.norm2(q))))
         return q
-######################################## Entry ########################################  
+
+class CrossAttentionOnlyBlock(nn.Module):
+    """
+    Cross-attention block for multimodal fusion (no self-attention).
+    """
+    def __init__(
+        self, dim, num_heads, mlp_ratio=4., qkv_bias=False, drop=0., attn_drop=0., init_values=None,
+        drop_path=0., act_layer=nn.GELU, norm_layer=nn.LayerNorm,
+        cross_attn_block_style='attn-deform', cross_attn_combine_style='concat',
+        k=10, n_group=2
+    ):
+        super().__init__()
+        self.norm_q = norm_layer(dim)
+        self.norm_v = norm_layer(dim)
+        self.ls = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
+        self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        self.mlp = Mlp(in_features=dim, hidden_features=int(dim * mlp_ratio), act_layer=act_layer, drop=drop)
+        self.norm2 = norm_layer(dim)
+        self.drop_path2 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+
+        self.cross_attn_combine_style = cross_attn_combine_style
+        assert cross_attn_combine_style in ['concat', 'onebyone'], f'got unexpect cross_attn_combine_style {cross_attn_combine_style} for local and global attn'
+        cross_attn_block_tokens = cross_attn_block_style.split('-')
+        assert len(cross_attn_block_tokens) > 0 and len(cross_attn_block_tokens) <= 2, f'invalid cross_attn_block_style {cross_attn_block_style}'
+        self.cross_attn_block_length = len(cross_attn_block_tokens)
+        self.cross_attn = None
+        self.local_cross_attn = None
+        for cross_attn_block_token in cross_attn_block_tokens:
+            assert cross_attn_block_token in ['attn', 'deform', 'graph', 'deform_graph'], f'got unexpect cross_attn_block_token {cross_attn_block_token} for Block component'
+            if cross_attn_block_token == 'attn':
+                self.cross_attn = CrossAttention(dim, dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=drop)
+            elif cross_attn_block_token == 'deform':
+                self.local_cross_attn = DeformableLocalCrossAttention(dim, num_heads=num_heads, qkv_bias=qkv_bias, attn_drop=attn_drop, proj_drop=drop, k=k, n_group=n_group)
+            elif cross_attn_block_token == 'graph':
+                self.local_cross_attn = DynamicGraphAttention(dim, k=k)
+            elif cross_attn_block_token == 'deform_graph':
+                self.local_cross_attn = improvedDeformableLocalGraphAttention(dim, k=k)
+        if self.cross_attn is not None and self.local_cross_attn is not None:
+            if cross_attn_combine_style == 'concat':
+                self.cross_attn_merge_map = nn.Linear(dim*2, dim)
+            else:
+                self.norm_q_2 = norm_layer(dim)
+                self.norm_v_2 = norm_layer(dim)
+                self.ls2 = LayerScale(dim, init_values=init_values) if init_values else nn.Identity()
+                self.drop_path3 = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+
+    def forward(self, q, v, q_pos, v_pos, cross_attn_idx=None):
+        feature_list = []
+        if self.cross_attn_block_length == 2:
+            if self.cross_attn_combine_style == 'concat':
+                norm_q = self.norm_q(q)
+                norm_v = self.norm_v(v)
+                if self.cross_attn is not None:
+                    global_attn_feat = self.cross_attn(norm_q, norm_v)
+                    feature_list.append(global_attn_feat)
+                if self.local_cross_attn is not None:
+                    local_attn_feat = self.local_cross_attn(q=norm_q, v=norm_v, q_pos=q_pos, v_pos=v_pos, idx=cross_attn_idx)
+                    feature_list.append(local_attn_feat)
+                if len(feature_list) == 2:
+                    f = torch.cat(feature_list, dim=-1)
+                    f = self.cross_attn_merge_map(f)
+                    q = q + self.drop_path(self.ls(f))
+                else:
+                    raise RuntimeError()
+            else: # onebyone
+                q = q + self.drop_path(self.ls(self.cross_attn(self.norm_q(q), self.norm_v(v))))
+                q = q + self.drop_path3(self.ls2(self.local_cross_attn(self.norm_q_2(q), self.norm_v_2(v), q_pos=q_pos, v_pos=v_pos, idx=cross_attn_idx)))
+        elif self.cross_attn_block_length == 1:
+            norm_q = self.norm_q(q)
+            norm_v = self.norm_v(v)
+            if self.cross_attn is not None:
+                global_attn_feat = self.cross_attn(norm_q, norm_v)
+                feature_list.append(global_attn_feat)
+            if self.local_cross_attn is not None:
+                local_attn_feat = self.local_cross_attn(q=norm_q, v=norm_v, q_pos=q_pos, v_pos=v_pos, idx=cross_attn_idx)
+                feature_list.append(local_attn_feat)
+            if len(feature_list) == 1:
+                f = feature_list[0]
+                q = q + self.drop_path(self.ls(f))
+            else:
+                raise RuntimeError()
+        q = q + self.drop_path2(self.mlp(self.norm2(q)))
+        return q
+######################################## Entry ########################################
 
 class TransformerEncoder(nn.Module):
     """ Transformer Encoder without hierarchical structure
@@ -321,7 +404,7 @@ class TransformerEncoder(nn.Module):
         for i in range(depth):
             self.blocks.append(SelfAttnBlockApi(
                 dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, init_values=init_values,
-                drop=drop_rate, attn_drop=attn_drop_rate, 
+                drop=drop_rate, attn_drop=attn_drop_rate,
                 drop_path = drop_path_rate[i] if isinstance(drop_path_rate, list) else drop_path_rate,
                 act_layer=act_layer, norm_layer=norm_layer,
                 block_style=block_style_list[i], combine_style=combine_style, k=k, n_group=n_group
@@ -330,7 +413,7 @@ class TransformerEncoder(nn.Module):
     def forward(self, x, pos):
         idx = idx = knn_point(self.k, pos, pos)
         for _, block in enumerate(self.blocks):
-            x = block(x, pos, idx=idx) 
+            x = block(x, pos, idx=idx)
         return x
 
 class TransformerDecoder(nn.Module):
@@ -347,7 +430,7 @@ class TransformerDecoder(nn.Module):
         for i in range(depth):
             self.blocks.append(CrossAttnBlockApi(
                 dim=embed_dim, num_heads=num_heads, mlp_ratio=mlp_ratio, qkv_bias=qkv_bias, init_values=init_values,
-                drop=drop_rate, attn_drop=attn_drop_rate, 
+                drop=drop_rate, attn_drop=attn_drop_rate,
                 drop_path = drop_path_rate[i] if isinstance(drop_path_rate, list) else drop_path_rate,
                 act_layer=act_layer, norm_layer=norm_layer,
                 self_attn_block_style=self_attn_block_style_list[i], self_attn_combine_style=self_attn_combine_style,
@@ -404,16 +487,16 @@ class PointTransformerEncoder(nn.Module):
             mlp_ratio=mlp_ratio,
             qkv_bias=qkv_bias,
             init_values=init_values,
-            drop_rate=drop_rate, 
+            drop_rate=drop_rate,
             attn_drop_rate=attn_drop_rate,
             drop_path_rate = dpr,
-            norm_layer=norm_layer, 
+            norm_layer=norm_layer,
             act_layer=act_layer,
             block_style_list=block_style_list,
             combine_style=combine_style,
             k=k,
             n_group=n_group)
-        self.norm = norm_layer(embed_dim) 
+        self.norm = norm_layer(embed_dim)
         self.apply(self._init_weights)
 
     def _init_weights(self, m):
@@ -471,16 +554,16 @@ class PointTransformerDecoder(nn.Module):
             mlp_ratio=mlp_ratio,
             qkv_bias=qkv_bias,
             init_values=init_values,
-            drop_rate=drop_rate, 
+            drop_rate=drop_rate,
             attn_drop_rate=attn_drop_rate,
             drop_path_rate = dpr,
-            norm_layer=norm_layer, 
+            norm_layer=norm_layer,
             act_layer=act_layer,
-            self_attn_block_style_list=self_attn_block_style_list, 
+            self_attn_block_style_list=self_attn_block_style_list,
             self_attn_combine_style=self_attn_combine_style,
-            cross_attn_block_style_list=cross_attn_block_style_list, 
+            cross_attn_block_style_list=cross_attn_block_style_list,
             cross_attn_combine_style=cross_attn_combine_style,
-            k=k, 
+            k=k,
             n_group=n_group
         )
         self.apply(self._init_weights)
@@ -506,7 +589,7 @@ class PointTransformerDecoderEntry(PointTransformerDecoder):
     def __init__(self, config, **kwargs):
         super().__init__(**dict(config))
 
-######################################## Grouper ########################################  
+######################################## Grouper ########################################
 class DGCNN_Grouper(nn.Module):
     def __init__(self, k = 16):
         super().__init__()
@@ -578,7 +661,7 @@ class DGCNN_Grouper(nn.Module):
         feature = x_k.view(batch_size * num_points_k, -1)[idx, :]
         feature = feature.view(batch_size, k, num_points_q, num_dims).permute(0, 3, 2, 1).contiguous()
         x_q = x_q.view(batch_size, num_dims, num_points_q, 1).expand(-1, -1, -1, k)
-        feature = torch.cat((feature - x_q, x_q), dim=1)
+        feature = torch.cat((feature - x_q, x_q), dim=1) # twice feature length
         return feature
 
     def forward(self, x, num):
@@ -590,12 +673,12 @@ class DGCNN_Grouper(nn.Module):
             OUTPUT:
 
                 coor bs N 3
-                f    bs N C(128) 
+                f    bs N C(128)
         '''
         x = x.transpose(-1, -2).contiguous()
 
         coor = x
-        f = self.input_trans(x)
+        f = self.input_trans(x) # feature 3->8
 
         f = self.get_graph_feature(coor, f, coor, f)
         f = self.layer1(f)
@@ -665,12 +748,12 @@ class SimpleEncoder(nn.Module):
     def forward(self, xyz, n_group):
         # 2048 divide into 128 * 32, overlap is needed
         if isinstance(n_group, list):
-            n_group = n_group[-1] 
+            n_group = n_group[-1]
 
         center = misc.fps(xyz, n_group) # B G 3
-            
+
         assert center.size(1) == n_group, f'expect center to be B {n_group} 3, but got shape {center.shape}'
-        
+
         batch_size, num_points, _ = xyz.shape
         # knn to get the neighborhood
         idx = knn_point(self.group_size, xyz, center)
@@ -681,15 +764,15 @@ class SimpleEncoder(nn.Module):
         idx = idx.view(-1)
         neighborhood = xyz.view(batch_size * num_points, -1)[idx, :]
         neighborhood = neighborhood.view(batch_size, n_group, self.group_size, 3).contiguous()
-            
+
         assert neighborhood.size(1) == n_group
         assert neighborhood.size(2) == self.group_size
-            
+
         features = self.embedding(neighborhood) # B G C
-        
+
         return center, features
 
-######################################## Fold ########################################    
+######################################## Fold ########################################
 class Fold(nn.Module):
     def __init__(self, in_channel, step , hidden_dim=512):
         super().__init__()
@@ -748,7 +831,7 @@ class SimpleRebuildFCLayer(nn.Module):
         batch_size = rec_feature.size(0)
         g_feature = rec_feature.max(1)[0]
         token_feature = rec_feature
-            
+
         patch_feature = torch.cat([
                 g_feature.unsqueeze(1).expand(-1, token_feature.size(1), -1),
                 token_feature
@@ -757,7 +840,7 @@ class SimpleRebuildFCLayer(nn.Module):
         assert rebuild_pc.size(1) == rec_feature.size(1)
         return rebuild_pc
 
-######################################## PCTransformer ########################################   
+######################################## PCTransformer ########################################
 class PCTransformer(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -768,7 +851,7 @@ class PCTransformer(nn.Module):
         assert self.encoder_type in ['graph', 'pn'], f'unexpected encoder_type {self.encoder_type}'
 
         in_chans = 3
-        self.num_query = query_num = config.num_query
+        self.num_query = query_num = config.num_query # 512
         global_feature_dim = config.global_feature_dim
 
         print_log(f'Transformer with config {config}', logger='MODEL')
@@ -777,11 +860,12 @@ class PCTransformer(nn.Module):
             self.grouper = DGCNN_Grouper(k = 16)
         else:
             self.grouper = SimpleEncoder(k = 32, embed_dims=512)
+
         self.pos_embed = nn.Sequential(
             nn.Linear(in_chans, 128),
             nn.GELU(),
             nn.Linear(128, encoder_config.embed_dim)
-        )  
+        )
         self.input_proj = nn.Sequential(
             nn.Linear(self.grouper.num_features, 512),
             nn.GELU(),
@@ -809,12 +893,12 @@ class PCTransformer(nn.Module):
         )
         # assert decoder_config.embed_dim == encoder_config.embed_dim
         if decoder_config.embed_dim == encoder_config.embed_dim:
-            self.mem_link = nn.Identity()
+            self.mem_link = nn.Identity() # keep same
         else:
             self.mem_link = nn.Linear(encoder_config.embed_dim, decoder_config.embed_dim)
         # Coarse Level 2 : Decoder
         self.decoder = PointTransformerDecoderEntry(decoder_config)
- 
+
         self.query_ranking = nn.Sequential(
             nn.Linear(3, 256),
             nn.GELU(),
@@ -839,39 +923,41 @@ class PCTransformer(nn.Module):
         bs = xyz.size(0)
         coor, f = self.grouper(xyz, self.center_num) # b n c
         pe =  self.pos_embed(coor)
-        x = self.input_proj(f)
+        x = self.input_proj(f) # b n encoder_config.embed_dim
 
         x = self.encoder(x + pe, coor) # b n c
-        global_feature = self.increase_dim(x) # B 1024 N 
+        global_feature = self.increase_dim(x) # B N 1024
         global_feature = torch.max(global_feature, dim=1)[0] # B 1024
 
-        coarse = self.coarse_pred(global_feature).reshape(bs, -1, 3)
+        coarse = self.coarse_pred(global_feature).reshape(bs, -1, 3) # (B, 3*query) -> (B,M,3)  from encoder output M=num_query
 
-        coarse_inp = misc.fps(xyz, self.num_query//2) # B 128 3
-        coarse = torch.cat([coarse, coarse_inp], dim=1) # B 224+128 3?
+        coarse_inp = misc.fps(xyz, self.num_query//2) # B num_query//2 3 from input points
+        coarse = torch.cat([coarse, coarse_inp], dim=1) # B 1.5*num_query 3
 
         mem = self.mem_link(x)
 
-        # query selection
-        query_ranking = self.query_ranking(coarse) # b n 1
-        idx = torch.argsort(query_ranking, dim=1, descending=True) # b n 1
-        coarse = torch.gather(coarse, 1, idx[:,:self.num_query].expand(-1, -1, coarse.size(-1)))
+        # query selection(ranking)
+        query_ranking = self.query_ranking(coarse) # b M+num_query//2 1
+        idx = torch.argsort(query_ranking, dim=1, descending=True) # b M+num_query//2 1 sorted
+        coarse = torch.gather(coarse, 1, idx[:,:self.num_query].expand(-1, -1, coarse.size(-1))) # re-rank M+num_query//2 to num_query
 
         if self.training:
             # add denoise task
-            # first pick some point : 64?
+            # first pick some point : 64? hyper-param
             picked_points = misc.fps(xyz, 64)
-            picked_points = misc.jitter_points(picked_points)
-            coarse = torch.cat([coarse, picked_points], dim=1) # B 256+64 3?
-            denoise_length = 64     
+            picked_points = misc.jitter_points(picked_points) # add noise
+            coarse = torch.cat([coarse, picked_points], dim=1) # B num_query+64 3
+            denoise_length = 64
 
             # produce query
+            # global_feature(B, 1024).unsqueeze(B, 1, 1024).expand(B, query+64, 1024).cat(B, query+64, 1024+3).mlp_query(B, query+64, decoder_embed_dim)
             q = self.mlp_query(
             torch.cat([
                 global_feature.unsqueeze(1).expand(-1, coarse.size(1), -1),
                 coarse], dim = -1)) # b n c
 
-            # forward decoder
+            # forward decoder (B, query, decoder_embed_dim)
+            # def forward(self, q, v, q_pos, v_pos, denoise_length=None):
             q = self.decoder(q=q, v=mem, q_pos=coarse, v_pos=coor, denoise_length=denoise_length)
 
             return q, coarse, denoise_length
@@ -882,13 +968,13 @@ class PCTransformer(nn.Module):
             torch.cat([
                 global_feature.unsqueeze(1).expand(-1, coarse.size(1), -1),
                 coarse], dim = -1)) # b n c
-            
+
             # forward decoder
             q = self.decoder(q=q, v=mem, q_pos=coarse, v_pos=coor)
 
             return q, coarse, 0
 
-######################################## PoinTr ########################################  
+######################################## PoinTr ########################################
 
 @MODELS.register_module()
 class AdaPoinTr(nn.Module):
@@ -903,7 +989,7 @@ class AdaPoinTr(nn.Module):
 
         self.fold_step = 8
         self.base_model = PCTransformer(config)
-        
+
         if self.decoder_type == 'fold':
             self.factor = self.fold_step**2
             self.decode_head = Fold(self.trans_dim, step=self.fold_step, hidden_dim=256)  # rebuild a cluster point
@@ -929,12 +1015,12 @@ class AdaPoinTr(nn.Module):
 
     def get_loss(self, ret, gt, epoch=1):
         pred_coarse, denoised_coarse, denoised_fine, pred_fine = ret
-        
+
         assert pred_fine.size(1) == gt.size(1)
 
         # denoise loss
-        idx = knn_point(self.factor, gt, denoised_coarse) # B n k 
-        denoised_target = index_points(gt, idx) # B n k 3 
+        idx = knn_point(self.factor, gt, denoised_coarse) # B n k
+        denoised_target = index_points(gt, idx) # B n k 3
         denoised_target = denoised_target.reshape(gt.size(0), -1, 3)
         assert denoised_target.size(1) == denoised_fine.size(1)
         loss_denoised = self.loss_func(denoised_fine, denoised_target)
@@ -947,27 +1033,26 @@ class AdaPoinTr(nn.Module):
 
         return loss_denoised, loss_recon
 
-    def forward(self, xyz):
-        q, coarse_point_cloud, denoise_length = self.base_model(xyz) # B M C and B M 3
-    
+    def forward(self, xyz, return_latent=False):
+        q, coarse_point_cloud, denoise_length = self.base_model(xyz) # q-[B M C] and coarse_point_cloud-[B M 3]
+
         B, M ,C = q.shape
 
-        global_feature = self.increase_dim(q.transpose(1,2)).transpose(1,2) # B M 1024
+        global_feature = self.increase_dim(q.transpose(1,2)).transpose(1,2) # B M 1024, only effect feature channel
         global_feature = torch.max(global_feature, dim=1)[0] # B 1024
 
-        rebuild_feature = torch.cat([
+        rebuild_feature = torch.cat([ # feature of each coarse_point_cloud
             global_feature.unsqueeze(-2).expand(-1, M, -1),
             q,
-            coarse_point_cloud], dim=-1)  # B M 1027 + C
+            coarse_point_cloud], dim=-1)  # B M 1027 + C + 3
 
-        
         # NOTE: foldingNet
         if self.decoder_type == 'fold':
             rebuild_feature = self.reduce_map(rebuild_feature.reshape(B*M, -1)) # BM C
             relative_xyz = self.decode_head(rebuild_feature).reshape(B, M, 3, -1)    # B M 3 S
-            rebuild_points = (relative_xyz + coarse_point_cloud.unsqueeze(-1)).transpose(2,3)  # B M S 3
+            rebuild_points = (relative_xyz + coarse_point_cloud.unsqueeze(-1)).transpose(2,3)  # B M S 3, relative to global
 
-        else:
+        else: # 'fc'
             rebuild_feature = self.reduce_map(rebuild_feature) # B M C
             relative_xyz = self.decode_head(rebuild_feature)   # B M S 3
             rebuild_points = (relative_xyz + coarse_point_cloud.unsqueeze(-2))  # B M S 3
@@ -984,7 +1069,10 @@ class AdaPoinTr(nn.Module):
             assert pred_coarse.size(1) == self.num_query
 
             ret = (pred_coarse, denoised_coarse, denoised_fine, pred_fine)
-            return ret
+            if return_latent:
+                return ret, q, coarse_point_cloud
+            else:
+                return ret
 
         else:
             assert denoise_length == 0
@@ -994,4 +1082,7 @@ class AdaPoinTr(nn.Module):
             assert coarse_point_cloud.size(1) == self.num_query
 
             ret = (coarse_point_cloud, rebuild_points)
-            return ret
+            if return_latent:
+                return ret, q, coarse_point_cloud
+            else:
+                return ret
