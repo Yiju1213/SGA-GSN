@@ -35,7 +35,7 @@ grasp_model : {
     # manager for grasp stability loss
     loss_manager: {},
 
-    # whether to use self-build visual encoder instead of AdaPoinTr output
+    # whether to use self-build visual encoder instead of AdaPoinTr output feature (still use AdaPoinTr output coordinates)
     use_vis_encoder: True,
 
     # Point sequence dropout configuration for both visual and contact features

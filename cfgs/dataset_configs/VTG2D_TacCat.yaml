@@ -1,7 +1,7 @@
 NAME: VTG2D
-DATA_PATH: data/GraspNet-1B/tactile-extended
-TAC_RGB_PATH: data/GraspNet-1B/tactile-extended/%s/tac_rgb/%s.png
-VIS_RGB_PATH: data/GraspNet-1B/tactile-extended/%s/vis_rgb/%s.png
-VIS_SEG_PATH: data/GraspNet-1B/tactile-extended/%s/vis_seg/%s.png
-BACKGROUND_PATH: data/GraspNet-1B/tactile-extended/bg_sim.jpg
+DATA_PATH: data/3DA-VTG
+TAC_RGB_PATH: data/3DA-VTG/%s/tac_rgb/%s.png
+VIS_RGB_PATH: data/3DA-VTG/%s/vis_rgb/%s.png
+VIS_SEG_PATH: data/3DA-VTG/%s/vis_seg/%s.png
+BACKGROUND_PATH: data/3DA-VTG/bg_sim.jpg
 ConcatTwoTactile: True # whether to concatenate left and right tactile images

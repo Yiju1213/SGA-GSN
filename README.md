@@ -29,7 +29,7 @@ The code is intended to run at:
 External data and assets should be linked or placed to match the config paths:
 
 ```text
-/SGA-GSN/data/GraspNet-1B/tactile-extended
+/SGA-GSN/data/3DA-VTG
 /SGA-GSN/data/graspnet-vhacd
 ```
 
@@ -40,6 +40,12 @@ The required AdaPoinTr shape checkpoint should be downloaded separately and plac
 ```
 
 `ckpts/ap_ps55.pth` is required for 3D VTG grasp-stability training and evaluation, but is not stored in Git.
+
+Manual 3DA-VTG downloads can be restored with:
+
+```bash
+bash install/extract_3da_vtg.sh <download_dir> /SGA-GSN/data
+```
 
 ## Entrypoints
 
@@ -60,3 +66,5 @@ DGCNN baseline training can use either `VTG_DGCNN_14M.yaml` or `VTG_DGCNN_45M.ya
 ## Environment Notes
 
 Install PyTorch and torchvision using the CUDA build appropriate for the target machine. Then install the Python packages listed in `requirements.txt`. PointNet2 ops should be installed from a local Pointnet2_PyTorch checkout, matching the container setup used during release preparation.
+
+The local CUDA extension modules can be installed with `bash install/ext_mod_install.sh`.

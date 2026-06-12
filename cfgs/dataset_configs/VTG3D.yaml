@@ -3,12 +3,12 @@ GT_POINTS: 8192
 VIS_POINTS: 2048
 TAC_POINTS: 1200 # (320*240) / (8*8)
 SC_INPUT_POINTS: 2048
-DATA_PATH: data/GraspNet-1B/tactile-extended
-TAC_DEP_PATH: data/GraspNet-1B/tactile-extended/%s/tac_dep/%s.png
-TAC_RGB_PATH: data/GraspNet-1B/tactile-extended/%s/tac_rgb/%s.png
-VIS_DEP_PATH: data/GraspNet-1B/tactile-extended/%s/vis_dep/%s.png
-VIS_RGB_PATH: data/GraspNet-1B/tactile-extended/%s/vis_rgb/%s.png
-VIS_SEG_PATH: data/GraspNet-1B/tactile-extended/%s/vis_seg/%s.png
+DATA_PATH: data/3DA-VTG
+TAC_DEP_PATH: data/3DA-VTG/%s/tac_dep/%s.png
+TAC_RGB_PATH: data/3DA-VTG/%s/tac_rgb/%s.png
+VIS_DEP_PATH: data/3DA-VTG/%s/vis_dep/%s.png
+VIS_RGB_PATH: data/3DA-VTG/%s/vis_rgb/%s.png
+VIS_SEG_PATH: data/3DA-VTG/%s/vis_seg/%s.png
 COMPLETE_MESH_PATH: data/graspnet-vhacd/model/%s/visualization.obj  # need static func to sample point cloud
 
 TAC_NOISE: 0.0001
